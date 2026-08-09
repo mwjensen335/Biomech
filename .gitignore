@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
 
 # Virtual environments
 .venv/
@@ -19,12 +20,11 @@ db.sqlite3
 .vscode/
 
 # Biomechanics raw / processed data
+analysis/data/
 *.c3d
 *.cmz
 *.cmx
 *.h5
-
-analysis/data/
 
 # OS
 .DS_Store
