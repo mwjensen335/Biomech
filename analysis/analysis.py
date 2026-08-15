@@ -64,5 +64,5 @@ if __name__ == "__main__":
 trial_c3d_contents = ktk.read_c3d(trial)
 
 trial_c3d_contents 
-
+trial_c3d_contents["Points"].data 
 
