@@ -10,6 +10,7 @@ not separate flexion/extension from valgus/varus or rotation.
 from pathlib import Path
 
 import numpy
+from kineticstoolkit import ktk  
 
 from c3d_to_hdf5 import get_analog, get_marker, load_trial
 
@@ -59,3 +60,9 @@ if __name__ == "__main__":
 
     grf1 = resultant_grf(trial, 1)
     print(f"Plate 1 resultant GRF over {len(grf1)} samples: peak={grf1.max():.1f}")
+
+trial_c3d_contents = ktk.read_c3d(trial)
+
+trial_c3d_contents 
+
+
