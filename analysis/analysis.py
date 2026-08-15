@@ -65,4 +65,5 @@ trial_c3d_contents = ktk.read_c3d(trial)
 
 trial_c3d_contents 
 trial_c3d_contents["Points"].data 
+trial_c3d_contents["ForcePlatforms"].data
 
