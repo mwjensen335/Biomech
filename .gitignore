@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-.env
-__pycache__/
-*.pyc
-*.h5
-=======
 # Python
 __pycache__/
 *.py[cod]
@@ -35,4 +29,6 @@ analysis/data/
 # OS
 .DS_Store
 Thumbs.db
->>>>>>> 5c91af3169d4e89ec04d59bd811e19757baa890d
+
+# Unrelated R project, kept local only
+Biomech-Rays/
