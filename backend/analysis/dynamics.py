@@ -4,8 +4,8 @@ step, and force-plate handling.
 
 Everything here is in the LAB frame (Z up, Y mediolateral, X anterior; meters, kg, N).
 The mirrored left-side frames analysis.py builds for joint-angle reporting are NOT used:
-a diagonal inertia tensor does not care about the sign of an axis, so a plain
-unmirrored right-handed frame per segment is exactly right for dynamics.
+a diagonal inertia tensor does not care about the sign of an axis, and the 
+unmirrored right-handed frame per segment is for dynamics.
 
 Sign convention for the results: the force/moment "at a joint" is what the PROXIMAL
 segment applies to the DISTAL one (e.g. the shoulder moment is the moment the trunk
@@ -20,12 +20,8 @@ from scipy.signal import butter, filtfilt
 import analysis as A
 
 GRAVITY = numpy.array([0.0, 0.0, -9.81])
-# Kinematics (and force-plate) cutoff. Matters a lot for a throw: on subject 000072's
-# fastball the peak shoulder internal-rotation torque is ~110 N.m at 12 Hz, ~135 at 20 Hz
-# and ~150 at 50 Hz, because each derivative amplifies marker noise. 12 Hz reproduces
-# published elite values, and the whole-body Newton residual (GRF vs M(a-g)) also falls
-# monotonically as the cutoff is lowered. Same cutoff for markers and plates so both sides
-# of Newton's equation have the same bandwidth.
+
+
 DEFAULT_CUTOFF_HZ = 12.0
 
 # The throwing arm needs a much higher cutoff than the rest of the body. Chosen against
@@ -190,7 +186,7 @@ def build_body_segments(ts, body_mass: float, anthro: dict | None = None) -> dic
         # part lengths give (middle 215.5 mm, lower 145.7 mm).
         omphalion_fraction = 215.5 / (215.5 + 145.7)
         # de Leva's landmarks lie on the trunk's central longitudinal axis, but CLAV/STRN
-        # are on the front surface (~10 cm off it), so a COM placed on the CLAV-STRN line
+        # are on the front surface, so a COM placed on the CLAV-STRN line
         # swings with the thorax's fast twist. Use the mid-thickness points instead --
         # the same ones Wu et al. (2005) use for the thorax long axis (IJ/C7, PX/T8).
         clav, strn = (pt("CLAV") + c7) / 2, (pt("STRN") + pt("T10")) / 2
@@ -243,7 +239,7 @@ def _net_effort(seg: Segment, loads: list) -> tuple:
 
 
 def newton_euler_step(seg: Segment, loads: list) -> tuple:
-    """(F_p, M_p): the force and moment the PROXIMAL neighbour applies to `seg`, at
+    """(F_p, M_p): the force and moment the PROXIMAL neighbor applies to `seg`, at
     seg.joint_proximal, given every other load on it (lab frame).
     """
     force, moment = _net_effort(seg, loads)
@@ -265,7 +261,7 @@ def solve_chain(chain: dict, end_loads: list | None = None) -> dict:
     ground reaction. Each segment's reaction is passed on, reversed, to the next.
 
     Returns {key: {"force": (n,3), "moment": (n,3), "point": (n,3)}}: what the proximal
-    neighbour applies to that segment at that point (lab frame).
+    neighbor applies to that segment at that point (lab frame).
     """
     loads = list(end_loads or [])
     joints = {}
@@ -301,8 +297,8 @@ def merge_segments(a: Segment, b: Segment, name: str) -> Segment:
 # --------------------------------------------------------------------------- force plates
 
 # Which in-plane edge direction is each plate's x axis. Determined from the data, not
-# assumed: for every motion trial of all 17 subjects, plate x = -u (choice 2) gave a
-# whole-body Newton residual of 40-220 N against 300-1200 N for the other thr
+# assumed: for every motion trial of all 17 subjects, plate x = -u  gave a
+# whole-body Newton residual of 40-220 N against 300-1200 N
 # choices (sum of plate forces vs M(a_COM - g) from de Leva segments). With it the plate
 # axes are x = +X (anterior, toward home plate), y = -Y, z = down.
 PLATE_X_CHOICE = 2

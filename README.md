@@ -19,7 +19,7 @@ with a moving cursor. The full slow-motion GIF is <code>backend/analysis/results
 
 ## What it computes
 
-For every throw:
+For every throw: 
 
 | Output | What it is |
 |---|---|
@@ -175,6 +175,34 @@ biomechanics/             subject metadata
 * **Small sample.** 17 pitchers is enough to validate the method, not to draw population
   conclusions.
 
+## Data and license
+
+The C3D motion-capture recordings and the reference joint kinetics used here come from
+**The OpenBiomechanics Project (OBP)** by Driveline Baseball Research and Development (Kyle
+Boddy), released under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/):
+[github.com/drivelineresearch/openbiomechanics](https://github.com/drivelineresearch/openbiomechanics).
+The raw recordings are not redistributed here; get them from the OBP repository.
+
+**Changes made.** The joint angles, joint forces and moments, and animations in this repository
+were recomputed by me from the OBP C3D files with the pipeline in `backend/analysis/`. They are not
+OBP's own outputs. A few parameters (the hip and shoulder joint-center offsets, and the filter
+cutoffs) were tuned by comparing against OBP's published results. `biomechanics/metadata (2).csv`
+and the `obp_*` columns in `backend/analysis/results/` are OBP values as published.
+
+**Terms.**
+
+* **Non-commercial.** This work is for research and education, not commercial use.
+* **Share-alike.** The derived material here (the results CSVs and the animations in
+  `backend/analysis/results/`) is shared under the same CC BY-NC-SA 4.0 license.
+* **No endorsement.** Driveline has not reviewed or endorsed this project. Comparisons with OBP's
+  results are my own.
+* **Sports-organization exclusion.** OBP forbids use of its data, without a paid license, by
+  employees, contractors or significant shareholders of professional sports organizations and
+  financial analysis firms. See [OBP's terms](https://www.openbiomechanics.org/#terms).
+
+**Citation.** Driveline Baseball Research and Development; Boddy, K. *The OpenBiomechanics Project
+(OBP)* [dataset]. https://github.com/drivelineresearch/openbiomechanics (see its `CITATION.cff`).
+
 ## References and data
 
 * de Leva P. (1996). Adjustments to Zatsiorsky–Seluyanov's segment inertia parameters.
@@ -183,6 +211,6 @@ biomechanics/             subject metadata
   (lower limb; shoulder, elbow, wrist and hand). *J Biomech*.
 * The C3D recordings and the reference joint kinetics are from the
   [OpenBiomechanics Project](https://github.com/drivelineresearch/openbiomechanics) (Driveline
-  Baseball). See that repository for its license and how to cite it.
+  Baseball). See [Data and license](#data-and-license) for the terms and how to cite it.
 * [Kinetics Toolkit](https://kineticstoolkit.uqam.ca) is used for segment frames, joint angles
   and the interactive player.
