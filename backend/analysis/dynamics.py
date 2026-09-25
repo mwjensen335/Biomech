@@ -21,7 +21,12 @@ import analysis as A
 
 GRAVITY = numpy.array([0.0, 0.0, -9.81])
 
-
+# Cutoff for the legs, trunk, head and force plates (the throwing arm has its own, below).
+# The same cutoff is used for markers and plates so both sides of Newton's equation have the
+# same bandwidth. The whole-body Newton residual (GRF vs M(a-g)) falls as the cutoff is
+# lowered, and against the OpenBiomechanics kinetics the leg-joint results barely change
+# between 8 and 20 Hz, so 12 Hz is a safe middle. Each derivative amplifies marker noise, so
+# this choice matters far more for the arm than for the body.
 DEFAULT_CUTOFF_HZ = 12.0
 
 # The throwing arm needs a much higher cutoff than the rest of the body. Chosen against
@@ -297,8 +302,8 @@ def merge_segments(a: Segment, b: Segment, name: str) -> Segment:
 # --------------------------------------------------------------------------- force plates
 
 # Which in-plane edge direction is each plate's x axis. Determined from the data, not
-# assumed: for every motion trial of all 17 subjects, plate x = -u  gave a
-# whole-body Newton residual of 40-220 N against 300-1200 N
+# assumed: for every motion trial of all 17 subjects, plate x = -u (choice 2) gave a
+# whole-body Newton residual of 40-220 N against 300-1200 N for the other three
 # choices (sum of plate forces vs M(a_COM - g) from de Leva segments). With it the plate
 # axes are x = +X (anterior, toward home plate), y = -Y, z = down.
 PLATE_X_CHOICE = 2
