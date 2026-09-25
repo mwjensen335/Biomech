@@ -11,6 +11,11 @@ Layout: one HDF5 group per subject, containing one subgroup per trial.
     /<subject_id>/<trial_name>/point_labels    (nMarkers,) variable-length UTF-8 strings
     /<subject_id>/<trial_name>/analogs         (nAnalogs, nAnalogFrames) float32, gzip
     /<subject_id>/<trial_name>/analog_labels   (nAnalogs,) variable-length UTF-8 strings
+    /<subject_id>/<trial_name>/force_platforms/corners  (nPlates, 4, 3) float32, meters, lab frame
+    /<subject_id>/<trial_name>/force_platforms/origin   (nPlates, 3) float32, C3D ORIGIN
+    /<subject_id>/<trial_name>/force_platforms/channel  (nPlates, 6) int, 1-based analog rows of
+                                                        Fx,Fy,Fz,Mx,My,Mz for each plate
+    /<subject_id>/<trial_name>/force_platforms attrs: type (C3D platform type, per plate)
     /<subject_id>/<trial_name> attrs: source_file, subject_id, session_id, trial_type,
                           point_rate, analog_rate, n_markers, n_frames,
                           duration_seconds, analog_samples_per_frame
@@ -39,6 +44,51 @@ def parse_trial_info(c3d_path: Path, c3d_dir: Path) -> tuple[str, str | None, st
     return subject_id, session_id, trial_type
 
 
+def write_force_platforms(c3d, group: h5py.Group) -> bool:
+    """Store the C3D FORCE_PLATFORM geometry, which is needed to rotate the raw plate
+    forces/moments into the lab frame. Returns False if the file has no platforms.
+    """
+    try:
+        fp = c3d["parameters"]["FORCE_PLATFORM"]
+        n_plates = int(fp["USED"]["value"][0])
+    except KeyError:
+        return False
+    if n_plates == 0:
+        return False
+
+    # ezc3d hands CORNERS back as [xyz][corner][plate] and CHANNEL as [channel][plate].
+    corners = numpy.asarray(fp["CORNERS"]["value"], dtype="float32")[:, :, :n_plates]
+    corners = numpy.transpose(corners, (2, 1, 0))  # (nPlates, 4, 3)
+    origin = numpy.asarray(fp["ORIGIN"]["value"], dtype="float32").reshape(-1, 3)[:n_plates]
+    channel = numpy.asarray(fp["CHANNEL"]["value"], dtype="int32")[:, :n_plates].T  # (nPlates, 6)
+
+    if "force_platforms" in group:
+        del group["force_platforms"]
+    fp_group = group.create_group("force_platforms")
+    fp_group.create_dataset("corners", data=corners)
+    fp_group.create_dataset("origin", data=origin)
+    fp_group.create_dataset("channel", data=channel)
+    fp_group.attrs["type"] = numpy.asarray(fp["TYPE"]["value"], dtype="int32")[:n_plates]
+    return True
+
+
+def backfill_force_platforms(c3d_dir: Path, h5_path: Path) -> None:
+    """Add force-platform geometry to trials already in the archive, without
+    re-converting their (unchanged) markers and analogs.
+    """
+    with h5py.File(h5_path, "a") as h5_file:
+        for c3d_path in sorted(c3d_dir.rglob("*.c3d")):
+            subject_id, _, _ = parse_trial_info(c3d_path, c3d_dir)
+            group_path = f"{subject_id}/{c3d_path.stem}"
+            if group_path not in h5_file:
+                continue
+            try:
+                found = write_force_platforms(ezc3d.c3d(str(c3d_path)), h5_file[group_path])
+                print(f"[{'ok' if found else 'none'}] {group_path}")
+            except Exception as exc:
+                print(f"[fail] {group_path}: {exc}")
+
+
 def convert_trial(c3d_path: Path, c3d_dir: Path, h5_file: h5py.File, overwrite: bool = False) -> str:
     trial_name = c3d_path.stem
     subject_id, session_id, trial_type = parse_trial_info(c3d_path, c3d_dir)
@@ -64,6 +114,8 @@ def convert_trial(c3d_path: Path, c3d_dir: Path, h5_file: h5py.File, overwrite: 
 
     analog_labels = c3d["parameters"]["ANALOG"]["LABELS"]["value"]
     group.create_dataset("analog_labels", data=analog_labels, dtype=STR_DTYPE)
+
+    write_force_platforms(c3d, group)
 
     point_rate = c3d["header"]["points"]["frame_rate"]
     analog_rate = c3d["header"]["analogs"]["frame_rate"]
@@ -113,7 +165,17 @@ def build_master_hdf5(c3d_dir: Path, h5_path: Path, overwrite: bool = False) -> 
 def load_trial(h5_path: Path, subject_id: str, trial_name: str) -> dict:
     with h5py.File(h5_path, "r") as h5_file:
         group = h5_file[f"{subject_id}/{trial_name}"]
+        force_platforms = None
+        if "force_platforms" in group:
+            fp = group["force_platforms"]
+            force_platforms = {
+                "corners": fp["corners"][()],
+                "origin": fp["origin"][()],
+                "channel": fp["channel"][()],
+                "type": fp.attrs["type"],
+            }
         return {
+            "force_platforms": force_platforms,
             "points": group["points"][()],
             "point_labels": [label.decode() if isinstance(label, bytes) else label
                               for label in group["point_labels"][()]],
@@ -187,6 +249,10 @@ def main() -> None:
     convert_parser.add_argument("h5_path", type=Path, help="Path to the master .h5 file to create/append to")
     convert_parser.add_argument("--overwrite", action="store_true", help="Re-convert trials that already exist")
 
+    backfill_parser = subparsers.add_parser("backfill-platforms", help="Add force-platform geometry to trials already in the archive")
+    backfill_parser.add_argument("c3d_dir", type=Path)
+    backfill_parser.add_argument("h5_path", type=Path)
+
     list_parser = subparsers.add_parser("list", help="List every subject/trial in an HDF5 archive")
     list_parser.add_argument("h5_path", type=Path)
 
@@ -199,6 +265,8 @@ def main() -> None:
 
     if args.command == "convert":
         build_master_hdf5(args.c3d_dir, args.h5_path, overwrite=args.overwrite)
+    elif args.command == "backfill-platforms":
+        backfill_force_platforms(args.c3d_dir, args.h5_path)
     elif args.command == "list":
         list_archive(args.h5_path)
     elif args.command == "describe":

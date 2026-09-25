@@ -32,3 +32,6 @@ Thumbs.db
 
 # Unrelated R project, kept local only
 Biomech-Rays/
+
+# Regenerable outputs (python backend/analysis/export_results.py)
+backend/analysis/results/arm_timeseries.csv

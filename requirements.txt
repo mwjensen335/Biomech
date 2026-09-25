@@ -6,3 +6,8 @@ gunicorn==23.0.0
 ezc3d==1.7.0
 h5py==3.16.0
 numpy==2.5.1
+scipy==1.16.0
+kineticstoolkit==0.17.0
+matplotlib==3.10.6
+pandas==2.3.0
+Pillow==11.3.0
