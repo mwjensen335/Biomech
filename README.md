@@ -1,9 +1,10 @@
 # Biomech — 3D inverse dynamics of baseball pitching
 
-This project turns raw motion-capture recordings of baseball pitchers into the quantity a
-pitching-biomechanics study cares about most: the **torques at the throwing shoulder and
-elbow** — and shows them, together with the pelvis and torso motion, in a slow-motion
-animation of the throw.
+This project turns raw motion-capture recordings of baseball pitchers into a topic large
+in the injury world: the **torques at the throwing shoulder and
+elbow**  and shows them, together with the pelvis and torso motion, in a slow-motion
+animation of the throw. Blending my interest in both the coordination/coordination variability 
+of these segments and how it interacts with arm stress. 
 
 It starts from C3D files (45 markers at 360 Hz plus three force plates at 1,080 Hz) for 17
 pitchers and 60 fastballs, and ends with per-pitch joint kinetics that were **checked against
